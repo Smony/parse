@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ee024033285c7c3f8e33220fa4118bd",
+    "content-hash": "518dc5d774929fc1be644ae6d3749f77",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -490,6 +490,39 @@
                 "time"
             ],
             "time": "2019-06-07T09:56:45+00:00"
+        },
+        {
+            "name": "phpquery/phpquery",
+            "version": "0.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/elboza/PhpQuery.git",
+                "reference": "bb781306fec808e34f2143da9dff28547d742c12"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/elboza/PhpQuery/zipball/bb781306fec808e34f2143da9dff28547d742c12",
+                "reference": "bb781306fec808e34f2143da9dff28547d742c12",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PhpQuery\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Beerware"
+            ],
+            "authors": [
+                {
+                    "name": "Fernando Iazeolla",
+                    "email": "fernando.iazeolla@gmail.com"
+                }
+            ],
+            "description": "jquery for php",
+            "time": "2018-04-21T16:49:30+00:00"
         },
         {
             "name": "psr/container",
