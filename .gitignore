@@ -1,0 +1,12 @@
+/vendor
+.DS_Store
+.idea
+.vscode
+.env
+.env.*.php
+.env.php
+
+package-lock.json
+
+
+/.idea/
