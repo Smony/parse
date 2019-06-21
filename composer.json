@@ -15,6 +15,6 @@
     },
     "autoload": {
         "files": ["db.php", "Parse.php"],
-        "classmap": ["model"]
+        "classmap": ["model", "command"]
     }
 }
