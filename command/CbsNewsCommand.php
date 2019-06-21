@@ -10,6 +10,7 @@ use phpQuery;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 
 class CbsNewsCommand extends Command
@@ -19,7 +20,7 @@ class CbsNewsCommand extends Command
 
     public $url = "https://www.cbsnews.com/latest/politics/";
     public $start = 1;
-    public $end = 3;
+    public $end = 2;
 
 
     protected function configure()
@@ -31,17 +32,18 @@ class CbsNewsCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln([
-            'Parse CbsNews',
-            '============',
-            '',
-        ]);
+        $io = new SymfonyStyle($input, $output);
+        $io->title('Parse CbsNews');
 
-        $this->parser($input, $output, $this->url, $this->start, $this->end);
+        $io->progressStart();
+        $io->newLine();
 
+        $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
+
+        $io->progressFinish();
     }
 
-    public function parser(InputInterface $input, OutputInterface $output, $url, $start, $end)
+    public function parser(InputInterface $input, OutputInterface $output, $url, $start, $end, SymfonyStyle $style)
     {
         $parse = new Parse();
 
@@ -87,8 +89,6 @@ class CbsNewsCommand extends Command
 
                     try {
 
-                        $output->writeln('<info>' . $title . '</info>');
-
                         $ex = explode("on", $published);
                         $space = explode(" ", $ex[1]);
                         $dd = explode(":", $space[5]);
@@ -116,12 +116,18 @@ class CbsNewsCommand extends Command
 
                                 ParseLog::create($VARS);
                             }
-                            $output->writeln('<info>добавлено..</info>');
+                            $style->success('добавлено..');
                         } else {
-                            $output->writeln('<question>есть в базе..</question>');
+//                            $output->writeln('<question>есть в базе..</question>');
+                            $style->warning('есть в базе..');
+                            $style->note(array(
+                                $title,
+                                $link,
+                            ));
                         }
 
-
+                        $style->progressAdvance(10);
+                        $style->newLine();
                     } catch (Exception $e) {
                         $output->writeln('<error>error..</error>');
                         exit;
@@ -132,7 +138,7 @@ class CbsNewsCommand extends Command
             }
 
             $start++;
-            $this->parser($input, $output, $url, $start, $end);
+            $this->parser($input, $output, $url, $start, $end, $style);
         }
     }
 
