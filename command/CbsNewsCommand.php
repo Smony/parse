@@ -11,6 +11,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Carbon\Carbon;
 
 
 class CbsNewsCommand extends Command
@@ -35,12 +36,19 @@ class CbsNewsCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Parse CbsNews');
 
+        $this->telegramMessage("CBS NEWS инициализирован - " . Carbon::now());
+
         $io->progressStart();
         $io->newLine();
 
-        $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
+        $this->telegramMessage("CBS NEWS Запущен - " . Carbon::now());
+
+        $return = $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
 
         $io->progressFinish();
+
+        $this->telegramMessage("CBS NEWS - Выполнен " . Carbon::now());
+        $this->telegramMessage("Проверено/Добавлено - " . $return);
     }
 
     public function parser(InputInterface $input, OutputInterface $output, $url, $start, $end, SymfonyStyle $style)
@@ -48,6 +56,11 @@ class CbsNewsCommand extends Command
         $parse = new Parse();
 
         $VARS = [];
+
+        $RETURN_LOG = "Were added..";
+
+        $count_out = 0;
+        $count_check = 0;
 
         if ($start < $end) {
             $file = file_get_contents($url . $start . '/');
@@ -62,6 +75,10 @@ class CbsNewsCommand extends Command
                 $thumb = $news->find('.item__thumb img')->attr('src');
 
                 if (!empty($title)) {
+
+                    $RETURN_LOG .= $title . $link;
+
+
                     $content = $link;
                     $con = phpQuery::newDocument(file_get_contents($content));
                     foreach ($con->find('.content-article') as $item2) {
@@ -117,9 +134,11 @@ class CbsNewsCommand extends Command
                                 ParseLog::create($VARS);
                             }
                             $style->success('добавлено..');
+                            $count_out++;
                         } else {
 //                            $output->writeln('<question>есть в базе..</question>');
                             $style->warning('есть в базе..');
+                            $count_check++;
                             $style->note(array(
                                 $title,
                                 $link,
@@ -140,6 +159,16 @@ class CbsNewsCommand extends Command
             $start++;
             $this->parser($input, $output, $url, $start, $end, $style);
         }
+
+        return $count_check . '/' . $count_out;
     }
 
+    public function telegramMessage($message)
+    {
+            $token = $_ENV['API_TELEGRAM'];
+            $chatid = $_ENV['CHAT_ID'];
+            $mess = $message;
+            $tbot = file_get_contents("https://api.telegram.org/bot".$token."/sendMessage?chat_id=".$chatid."&text=".urlencode($mess)); //Если нашли ошибку отправляем  сообщение в телеграмм
+
+    }
 }
