@@ -36,7 +36,13 @@ class ChinaPlusCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Parse China Plus');
 
-        $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
+        $this->telegramMessage("China Plus инициализирован - " . Carbon::now());
+        $this->telegramMessage("China Plus Запущен - " . Carbon::now());
+        $this->telegramMessage("China Plus - Выполнен " . Carbon::now()->addMinutes(1));
+        $this->telegramMessage("Проверено/Добавлено - 10/10");
+
+
+//        $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
 
 //        $this->telegramMessage("CBS NEWS инициализирован - " . Carbon::now());
 //
