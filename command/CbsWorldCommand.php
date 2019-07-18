@@ -13,13 +13,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Carbon\Carbon;
 
-class CbsNewsCommand extends Command
+class CbsWorldCommand extends Command
 {
-    protected static $defaultName = 'app:cbs-news';
+    protected static $defaultName = 'app:cbs-world';
 
-    public $url = "https://www.cbsnews.com/latest/politics/";
+    public $url = "https://www.cbsnews.com/latest/world/";
     public $start = 1;
-    public $end = 7;
+    public $end = 2;
 
     protected function configure()
     {
@@ -31,11 +31,11 @@ class CbsNewsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Parse CbsNews');
+        $io->title('Parse Cbs World');
         $parse = new Parse();
 
         $text = "
-        *Parse CBS News*
+        *Parse CBS World*
          _парсер был запущен_
          [Open this link](https://thetop10news.com/author/cbs-news/)
         ";
@@ -58,7 +58,7 @@ class CbsNewsCommand extends Command
 
             $new = phpQuery::newDocument($file);
 
-            foreach ($new->find('#component-politics .component__item-wrapper article') as $item) {
+            foreach ($new->find('#component-world .component__item-wrapper article') as $item) {
                 $news = pq($item);
 
                 $title = $news->find('h4')->html();
@@ -89,7 +89,6 @@ class CbsNewsCommand extends Command
                     }
 
                     try {
-
                         $ex = explode("on", $published);
                         $space = explode(" ", $ex[1]);
                         $dd = explode(":", $space[5]);
@@ -106,8 +105,7 @@ class CbsNewsCommand extends Command
 
                         if (empty($check)) {
                             $thumb_id = $parse->uploadImage(substr($thumb, 0, -1));
-
-                            $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 12, 2, $text_out, $thumb_id);
+                            $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 13, 2, $text_out, $thumb_id);
 
                             $output->writeln('<comment>' . $parse_id . '</comment>');
                             if (!empty($parse_id)) {
@@ -117,7 +115,6 @@ class CbsNewsCommand extends Command
 
                                 ParseLog::create($VARS);
                             }
-
                             $style->success('добавлено..');
                         } else {
                             $style->warning('есть в базе..');
@@ -128,11 +125,8 @@ class CbsNewsCommand extends Command
                         $output->writeln('<error>error..</error>');
                         exit;
                     }
-
                 }
-
             }
-
             $start++;
             $this->parser($input, $output, $url, $start, $end, $style);
         }

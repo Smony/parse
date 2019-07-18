@@ -6,14 +6,60 @@ require "phpQuery.php";
 
 class Parse
 {
-
     public $tables = ['parse_log', 'sites'];
 
+//    for test
+    public $TELEGRAM_TOKEN = '855351439:AAGufMqcr0RPFRNbvnAn-4hnXCMY9pIrcCw';
+    public $TELEGRAM_CHATID = '-397220922';
+
+//    prod
+//    public $TELEGRAM_TOKEN = '778793190:AAEAp_ANY6_q5T_SVwvz8wtqdpLHT8NGqgQ';
+//    public $TELEGRAM_CHATID = '-320696767';
 
     public function __construct()
     {
 
 
+    }
+
+    public function message_to_telegram($text)
+    {
+        $ch = curl_init();
+        curl_setopt_array(
+            $ch,
+            array(
+                CURLOPT_URL => 'https://api.telegram.org/bot' . $this->TELEGRAM_TOKEN . '/sendMessage',
+                CURLOPT_POST => TRUE,
+                CURLOPT_RETURNTRANSFER => TRUE,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_POSTFIELDS => array(
+                    'chat_id' => $this->TELEGRAM_CHATID,
+                    'text' => $text,
+                    'parse_mode' => 'Markdown',
+                ),
+            )
+        );
+        curl_exec($ch);
+    }
+
+    public function gif_to_telegram($photo)
+    {
+        $ch = curl_init();
+        curl_setopt_array(
+            $ch,
+            array(
+                CURLOPT_URL => 'https://api.telegram.org/bot' . $this->TELEGRAM_TOKEN . '/sendVideo',
+                CURLOPT_POST => TRUE,
+                CURLOPT_RETURNTRANSFER => TRUE,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_POSTFIELDS => array(
+                    'chat_id' => $this->TELEGRAM_CHATID,
+                    'video' => $photo,
+                    'parse_mode' => 'Markdown',
+                ),
+            )
+        );
+        curl_exec($ch);
     }
 
     /**
@@ -28,8 +74,8 @@ class Parse
     public function crated($title, $date, $date_gmt, $status, $categories, $author, $content, $featured)
     {
         $curl = curl_init();
-
         curl_setopt_array($curl, array(
+
             CURLOPT_URL => "http://thetop10news.com/wp-json/wp/v2/posts",
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_ENCODING => "",
@@ -42,7 +88,7 @@ class Parse
 
             CURLOPT_HTTPHEADER => array(
                 "Accept: */*",
-                "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvdGhldG9wMTBuZXdzLmNvbSIsImlhdCI6MTU2MDg4NDU0MSwibmJmIjoxNTYwODg0NTQxLCJleHAiOjE1NjE0ODkzNDEsImRhdGEiOnsidXNlciI6eyJpZCI6IjEifX19.umbiV5dlCxRm9t3K3GvqCOhwoRR2o3drEjNYLdAnqug",
+                "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvdGhldG9wMTBuZXdzLmNvbSIsImlhdCI6MTU2MzMzNzkxNSwibmJmIjoxNTYzMzM3OTE1LCJleHAiOjE1NjM5NDI3MTUsImRhdGEiOnsidXNlciI6eyJpZCI6IjEyIn19fQ.gWsWCiQyhah4H7YjYzeo-IGEd44BpRtLP7oomV5UJ40",
                 "Cache-Control: no-cache",
                 "Connection: keep-alive",
                 "Host: thetop10news.com",
@@ -74,7 +120,7 @@ class Parse
         curl_setopt($ch, CURLOPT_POSTFIELDS, $file);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvdGhldG9wMTBuZXdzLmNvbSIsImlhdCI6MTU2MDg4NDU0MSwibmJmIjoxNTYwODg0NTQxLCJleHAiOjE1NjE0ODkzNDEsImRhdGEiOnsidXNlciI6eyJpZCI6IjEifX19.umbiV5dlCxRm9t3K3GvqCOhwoRR2o3drEjNYLdAnqug",
+            "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvdGhldG9wMTBuZXdzLmNvbSIsImlhdCI6MTU2MzMzNzkxNSwibmJmIjoxNTYzMzM3OTE1LCJleHAiOjE1NjM5NDI3MTUsImRhdGEiOnsidXNlciI6eyJpZCI6IjEyIn19fQ.gWsWCiQyhah4H7YjYzeo-IGEd44BpRtLP7oomV5UJ40",
             "Host: thetop10news.com",
             'Content-Disposition: attachment; filename="' . $image . '"',
             "content-type: image/png; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW"
@@ -83,7 +129,32 @@ class Parse
         curl_close($ch);
         $result = json_decode($result);
         return $result->id;
+    }
 
+    /**
+     * @param $image
+     * @return mixed
+     */
+    public function uploadMedia($image)
+    {
+        $file = file_get_contents($image);
+        $url = 'https://thetop10news.com/wp-json/wp/v2/media';
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $file);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvdGhldG9wMTBuZXdzLmNvbSIsImlhdCI6MTU2MzMzNzkxNSwibmJmIjoxNTYzMzM3OTE1LCJleHAiOjE1NjM5NDI3MTUsImRhdGEiOnsidXNlciI6eyJpZCI6IjEyIn19fQ.gWsWCiQyhah4H7YjYzeo-IGEd44BpRtLP7oomV5UJ40",
+            "Host: thetop10news.com",
+            'Content-Disposition: attachment; filename="' . $image . '"',
+            "content-type: image/png; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW"
+        ]);
+        $result = curl_exec($ch);
+        curl_close($ch);
+        $result = json_decode($result);
+        return $result;
     }
 
     //for testing
@@ -139,8 +210,27 @@ class Parse
         return array_search($m, $month);
     }
 
+    /**
+     * @param $m
+     * @return string
+     */
+    public function getMonths($m): string
+    {
+        $month = array(
+            1 => 'January',
+            2 => 'February',
+            3 => 'March',
+            4 => 'April',
+            5 => 'May',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'August',
+            9 => 'September',
+            10 => 'October',
+            11 => 'November',
+            12 => 'December'
+        );
 
-//
-
-
+        return array_search($m, $month);
+    }
 }

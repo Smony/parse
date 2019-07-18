@@ -19,9 +19,9 @@ class ChinaPlusCommand extends Command
 
     protected static $defaultName = 'app:china-plus-news';
 
-    public $url = "http://chinaplus.cri.cn/news/world/index.html";
-    public $start = 1;
-    public $end = 2;
+    public $url = "http://chinaplus.cri.cn/news/world/index";
+    public $start = 0;
+    public $end = 1;
 
 
     protected function configure()
@@ -35,28 +35,19 @@ class ChinaPlusCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->title('Parse China Plus');
+        $parse = new Parse();
 
-        $this->telegramMessage("China Plus инициализирован - " . Carbon::now());
-        $this->telegramMessage("China Plus Запущен - " . Carbon::now());
-        $this->telegramMessage("China Plus - Выполнен " . Carbon::now()->addMinutes(1));
-        $this->telegramMessage("Проверено/Добавлено - 10/10");
+        $text = "
+        *Parse China Plus*
+         _парсер был запущен_
+         [Open this link](https://thetop10news.com/author/china-plus/)
+        ";
+        $photo = "https://i.gifer.com/NE0C.gif";
 
+        $parse->message_to_telegram($text);
+//        $parse->gif_to_telegram($photo);
 
-//        $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
-
-//        $this->telegramMessage("CBS NEWS инициализирован - " . Carbon::now());
-//
-//        $io->progressStart();
-//        $io->newLine();
-//
-//        $this->telegramMessage("CBS NEWS Запущен - " . Carbon::now());
-//
-//        $return = $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
-//
-//        $io->progressFinish();
-//
-//        $this->telegramMessage("CBS NEWS - Выполнен " . Carbon::now());
-//        $this->telegramMessage("Проверено/Добавлено - " . $return);
+        $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
     }
 
     public function parser(InputInterface $input, OutputInterface $output, $url, $start, $end, SymfonyStyle $style)
@@ -64,12 +55,12 @@ class ChinaPlusCommand extends Command
         $parse = new Parse();
         $VARS = [];
 
-        $count_out = 0;
-        $count_check = 0;
-
-//        if ($start < $end) {
-//            $file = file_get_contents($url . $start . '/');
-            $file = file_get_contents($url);
+        if ($start < $end) {
+            if ($start == 0) {
+                $file = file_get_contents($url . '.html');
+            } else {
+                $file = file_get_contents($url . '_' . $start . '.html');
+            }
 
             $new = phpQuery::newDocument($file);
 
@@ -79,6 +70,7 @@ class ChinaPlusCommand extends Command
                 $title = $news->find('.news-item-text h3 a')->html();
                 $link = $news->find('.news-item-text h3 a')->attr('href');
                 $thumb = $news->find('.news-item-photo img')->attr('src');
+                $thumb = explode("?", $thumb)[0];
 
                 if (!empty($title)) {
 
@@ -88,8 +80,8 @@ class ChinaPlusCommand extends Command
                         $content2 = pq($item2);
                         $published = $content2->find('.article-type .article-type-item-time')->html();
                         $text = $content2->find('.article-con')->html();
+                        $text .= "<p><a target=\"_blank\" rel=\"nofollow\" href=\"$link\">Source</a></p>";
                     }
-
 
                     try {
                         $ex = explode(" ", $published);
@@ -99,34 +91,26 @@ class ChinaPlusCommand extends Command
                         $check = ParseLog::where('token', $link)->first();
 
                         if (empty($check)) {
+                            $thumb_id = $parse->uploadImage($thumb);
+                            $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 13, 11, $text_out, $thumb_id);
 
-                            dump($thumb);
-                         $parse->uploadImage("http://img3.zhytuku.meldingcloud.com/images/zhycms_chinaplus/20190622/d9ff00c6-9834-4463-b8af-baedee0de323.jpg?x-oss-process=image%2Fresize%2Cw_720%2Ch_405");
-//                            $thumb_id = $parse->uploadImage($thumb);
-//                            $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 4, 6, $text_out, $thumb_id);
-//                            $parse->crated($title, $dd_post, $dd_post, "publish", 4, 6, $text_out, $thumb_id);
+                            $output->writeln('<comment>' . $parse_id . '</comment>');
+                            if (!empty($parse_id)) {
+                                $VARS['item'] = $parse_id;
+                                $VARS['token'] = $link;
+                                $VARS['site_id'] = 2;
 
-                            //$output->writeln('<comment>' . $parse_id . '</comment>');
-//                            if (!empty($parse_id)) {
-//                                $VARS['item'] = $parse_id;
-//                                $VARS['token'] = $link;
-//                                $VARS['site_id'] = 2;
-//
-//                                ParseLog::create($VARS);
-//                            }
+                                ParseLog::create($VARS);
+                            }
                             $style->success('добавлено..');
-                            $count_out++;
                         } else {
                             $style->warning('есть в базе..');
-                            $count_check++;
                             $style->note(array(
                                 $title,
                                 $link,
                             ));
                         }
 
-//                        $style->progressAdvance(10);
-//                        $style->newLine();
                     } catch (Exception $e) {
                         $output->writeln('<error>error..</error>');
                         exit;
@@ -135,20 +119,8 @@ class ChinaPlusCommand extends Command
 
             }
 
-//            $start++;
-//            $this->parser($input, $output, $url, $start, $end, $style);
-//        }
-
-        return $count_check . '/' . $count_out;
-    }
-
-
-    public function telegramMessage($message)
-    {
-            $token = $_ENV['API_TELEGRAM'];
-            $chatid = $_ENV['CHAT_ID'];
-            $mess = $message;
-            $tbot = file_get_contents("https://api.telegram.org/bot".$token."/sendMessage?chat_id=".$chatid."&text=".urlencode($mess)); //Если нашли ошибку отправляем  сообщение в телеграмм
-
+            $start++;
+            $this->parser($input, $output, $url, $start, $end, $style);
+        }
     }
 }

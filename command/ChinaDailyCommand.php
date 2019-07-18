@@ -13,16 +13,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Carbon\Carbon;
 
-
 class ChinaDailyCommand extends Command
 {
-
     protected static $defaultName = 'app:china-daily-news';
 
     public $url = "http://www.chinadaily.com.cn/world/america/page";
     public $start = 1;
     public $end = 2;
-
 
     protected function configure()
     {
@@ -35,19 +32,25 @@ class ChinaDailyCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->title('Parse China Daily');
+        $parse = new Parse();
 
-        $return = $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
+        $text = "
+        *Parse China Daily*
+         _парсер был запущен_
+         [Open this link](https://thetop10news.com/author/china-daily/)
+        ";
+        $photo = "https://i.gifer.com/NE0C.gif";
 
-//        $this->telegramMessage("China Daily (world) - Выполнен (" . Carbon::now() . ") Добавлено - " . $return);
+        $parse->message_to_telegram($text);
+//        $parse->gif_to_telegram($photo);
+
+        $this->parser($input, $output, $this->url, $this->start, $this->end, $io);
     }
 
     public function parser(InputInterface $input, OutputInterface $output, $url, $start, $end, SymfonyStyle $style)
     {
         $parse = new Parse();
         $VARS = [];
-
-        $count_out = 0;
-        $count_check = 0;
 
         if ($start < $end) {
 
@@ -78,11 +81,13 @@ class ChinaDailyCommand extends Command
 
                     try {
                         $dd_post = $published;
+                        $dd_post = explode(" ", $dd_post)[0] . "T" . explode(" ", $dd_post)[1] . ":00+00:00";
                         $text_out = $text;
 
                         $check = ParseLog::where('token', $link)->first();
 
                         if (empty($check)) {
+
                             $thumb_id = $parse->uploadImage($thumb);
                             $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 13, 10, $text_out, $thumb_id);
 
@@ -94,15 +99,10 @@ class ChinaDailyCommand extends Command
 
                                 ParseLog::create($VARS);
                             }
+
                             $style->success('добавлено..');
-                            $count_out++;
                         } else {
                             $style->warning('есть в базе..');
-                            $count_check++;
-                            $style->note(array(
-                                $title,
-                                $link,
-                            ));
                         }
 
                     } catch (Exception $e) {
@@ -110,23 +110,9 @@ class ChinaDailyCommand extends Command
                         exit;
                     }
                 }
-
             }
-
             $start++;
             $this->parser($input, $output, $url, $start, $end, $style);
         }
-
-        return $count_out;
-    }
-
-
-    public function telegramMessage($message)
-    {
-        $token = $_ENV['API_TELEGRAM'];
-        $chatid = $_ENV['CHAT_ID'];
-        $mess = $message;
-        $tbot = file_get_contents("https://api.telegram.org/bot".$token."/sendMessage?chat_id=".$chatid."&text=".urlencode($mess)); //Если нашли ошибку отправляем  сообщение в телеграмм
-
     }
 }

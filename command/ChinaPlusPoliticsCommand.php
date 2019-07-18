@@ -13,13 +13,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Carbon\Carbon;
 
-class CbsNewsCommand extends Command
+class ChinaPlusPoliticsCommand extends Command
 {
-    protected static $defaultName = 'app:cbs-news';
 
-    public $url = "https://www.cbsnews.com/latest/politics/";
-    public $start = 1;
-    public $end = 7;
+    protected static $defaultName = 'app:china-plus-politics';
+
+    public $url = "http://chinaplus.cri.cn/news/politics/index";
+    public $start = 0;
+    public $end = 1;
 
     protected function configure()
     {
@@ -31,13 +32,13 @@ class CbsNewsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Parse CbsNews');
+        $io->title('Parse China Plus Politics');
         $parse = new Parse();
 
         $text = "
-        *Parse CBS News*
+        *Parse China Plus Politics*
          _парсер был запущен_
-         [Open this link](https://thetop10news.com/author/cbs-news/)
+         [Open this link](https://thetop10news.com/author/china-plus/)
         ";
         $photo = "https://i.gifer.com/NE0C.gif";
 
@@ -50,85 +51,63 @@ class CbsNewsCommand extends Command
     public function parser(InputInterface $input, OutputInterface $output, $url, $start, $end, SymfonyStyle $style)
     {
         $parse = new Parse();
-
         $VARS = [];
 
         if ($start < $end) {
-            $file = file_get_contents($url . $start . '/');
+            if ($start == 0) {
+                $file = file_get_contents($url . '.html');
+            } else {
+                $file = file_get_contents($url . '_' . $start . '.html');
+            }
 
             $new = phpQuery::newDocument($file);
 
-            foreach ($new->find('#component-politics .component__item-wrapper article') as $item) {
+            foreach ($new->find('.newsList-con .news-item') as $item) {
                 $news = pq($item);
 
-                $title = $news->find('h4')->html();
-                $link = $news->find('a')->attr('href');
-                $thumb = $news->find('.item__thumb img')->attr('src');
+                $title = $news->find('.news-item-text h3 a')->html();
+                $link = $news->find('.news-item-text h3 a')->attr('href');
+                $thumb = $news->find('.news-item-photo img')->attr('src');
+                $thumb = explode("?", $thumb)[0];
 
                 if (!empty($title)) {
                     $content = $link;
                     $con = phpQuery::newDocument(file_get_contents($content));
-                    foreach ($con->find('.content-article') as $item2) {
+                    foreach ($con->find('.article-left') as $item2) {
                         $content2 = pq($item2);
-
-                        if (strpos($link, '/news/')) {
-                            $video = $content2->find('figure iframe')->attr('src');
-
-                            if (!empty($video)) {
-                                $online = "<p><iframe src=\"$video\" width=\"100%\" height=\"550px\" frameborder=\"0\"></iframe></p>";
-                            } else {
-                                $online = '';
-                            }
-
-                            $text = $content2->find('section')->html();
-                            $text = preg_replace('/\<figure class\="content-recirculation"\>(.+)\<\/figure\>/isU', '', $text);
-                            $text .= "<p><a target=\"_blank\" rel=\"nofollow\" href=\"$link\">Source</a></p>";
-
-                            $published = $content2->find('.content__published-on small')->html();
-                        }
+                        $published = $content2->find('.article-type .article-type-item-time')->html();
+                        $text = $content2->find('.article-con')->html();
+                        $text .= "<p><a target=\"_blank\" rel=\"nofollow\" href=\"$link\">Source</a></p>";
                     }
 
                     try {
-
-                        $ex = explode("on", $published);
-                        $space = explode(" ", $ex[1]);
-                        $dd = explode(":", $space[5]);
-                        $m = $space[1];
-                        $d = trim($space[2], ",");
-                        $y = $space[3];
-                        $h = $dd[0];
-                        $mm = $dd[1];
-                        $dd_post = date('c', mktime($h, $mm, 0, $parse->getMonth($m), $d, $y));
-
-                        $text_out = $online . $text;
+                        $ex = explode(" ", $published);
+                        $dd_post = $ex[1] . 'T' . $ex[2];
+                        $text_out = $text;
 
                         $check = ParseLog::where('token', $link)->first();
 
                         if (empty($check)) {
-                            $thumb_id = $parse->uploadImage(substr($thumb, 0, -1));
-
-                            $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 12, 2, $text_out, $thumb_id);
+                            $thumb_id = $parse->uploadImage($thumb);
+                            $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 12, 11, $text_out, $thumb_id);
 
                             $output->writeln('<comment>' . $parse_id . '</comment>');
                             if (!empty($parse_id)) {
                                 $VARS['item'] = $parse_id;
                                 $VARS['token'] = $link;
-                                $VARS['site_id'] = 1;
+                                $VARS['site_id'] = 2;
 
                                 ParseLog::create($VARS);
                             }
-
                             $style->success('добавлено..');
                         } else {
                             $style->warning('есть в базе..');
                         }
 
-                        $style->newLine();
                     } catch (Exception $e) {
                         $output->writeln('<error>error..</error>');
                         exit;
                     }
-
                 }
 
             }
@@ -136,5 +115,6 @@ class CbsNewsCommand extends Command
             $start++;
             $this->parser($input, $output, $url, $start, $end, $style);
         }
+
     }
 }
