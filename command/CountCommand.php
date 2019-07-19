@@ -34,30 +34,15 @@ class CountCommand extends Command
         $io->title('Count:');
         $parse = new Parse();
 
-//        $categories = $this->getCounts($this->categories);
-//        $authors = $this->getAuthors($this->authors);
-//        $contents = $this->getContent($this->posts, 14);
-//
         $statistics = $this->statisticsEveryDay();
-//
-        $statistics = '`' . implode("` `", $statistics) . '`';
-//
-//        dump($statistics);
-
-
-
-//        dump($categories);
-//        dump($authors);
-//        dump($contents);
-
-        //?categories=1813&per_page=10
+        $statistics = '<pre>' . implode(", ", $statistics) . '</pre>';
 
         $text = "
-        *За последние сутки добавлено:*
-         ". $statistics ."
+       <b>За последние сутки</b>, <strong>добавлено:</strong>
+        $statistics
         ";
 
-        $parse->message_to_telegram($text);
+        $parse->message_to_telegram_html($text);
     }
 
     protected function getCounts($categories)
@@ -145,7 +130,7 @@ class CountCommand extends Command
     {
         $VARS = [];
 
-        $string = file_get_contents($posts . '?author=' . $author_id . '&per_page=100');
+        $string = file_get_contents($posts . '?author=' . $author_id . '&orderby=date&per_page=100');
         $data = json_decode($string);
 
         switch (json_last_error()) {
@@ -174,7 +159,15 @@ class CountCommand extends Command
 
         if ($data_error != '') echo $data_error;
 
-        return count($data) ?? 0;
+        foreach ($data as $item) {
+            $dt = explode('T', $item->date);
+            if ($item->date == date("Y-m-d") . "T" . $dt[1]) {
+                $VARS[$item->id] = $item;
+
+            }
+        }
+
+        return count($VARS) ?? 0;
     }
 
     protected function statisticsEveryDay()

@@ -11,10 +11,12 @@ class Parse
 //    for test
     public $TELEGRAM_TOKEN = '855351439:AAGufMqcr0RPFRNbvnAn-4hnXCMY9pIrcCw';
     public $TELEGRAM_CHATID = '-397220922';
+    public $TELEGRAM_CHATID2 = '-397220922';
 
 //    prod
 //    public $TELEGRAM_TOKEN = '778793190:AAEAp_ANY6_q5T_SVwvz8wtqdpLHT8NGqgQ';
 //    public $TELEGRAM_CHATID = '-320696767';
+//    public $TELEGRAM_CHATID2 = '-348064448';
 
     public function __construct()
     {
@@ -36,6 +38,26 @@ class Parse
                     'chat_id' => $this->TELEGRAM_CHATID,
                     'text' => $text,
                     'parse_mode' => 'Markdown',
+                ),
+            )
+        );
+        curl_exec($ch);
+    }
+
+    public function message_to_telegram_html($text)
+    {
+        $ch = curl_init();
+        curl_setopt_array(
+            $ch,
+            array(
+                CURLOPT_URL => 'https://api.telegram.org/bot' . $this->TELEGRAM_TOKEN . '/sendMessage',
+                CURLOPT_POST => TRUE,
+                CURLOPT_RETURNTRANSFER => TRUE,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_POSTFIELDS => array(
+                    'chat_id' => $this->TELEGRAM_CHATID2,
+                    'text' => $text,
+                    'parse_mode' => 'HTML',
                 ),
             )
         );
