@@ -19,6 +19,7 @@ class CountCommand extends Command
 
     public $categories = "http://thetop10news.com/wp-json/wp/v2/categories";
     public $authors = "http://thetop10news.com/wp-json/wp/v2/users";
+    public $posts = "http://thetop10news.com/wp-json/wp/v2/posts";
 
     protected function configure()
     {
@@ -33,19 +34,30 @@ class CountCommand extends Command
         $io->title('Count:');
         $parse = new Parse();
 
-        $categories = $this->getCounts($this->categories);
-        $authors = $this->getAuthors($this->authors);
-
-        dump($categories);
-        dump($authors);
-
-//        $text = "
-//        *" . new Carbon() . "*
-//        ``` " . implode(",", $categories) . " ```
-//        ``` " . implode(",", $authors) . " ```
-//        ";
+//        $categories = $this->getCounts($this->categories);
+//        $authors = $this->getAuthors($this->authors);
+//        $contents = $this->getContent($this->posts, 14);
 //
-//        $parse->message_to_telegram($text);
+        $statistics = $this->statisticsEveryDay();
+//
+        $statistics = '`' . implode("` `", $statistics) . '`';
+//
+//        dump($statistics);
+
+
+
+//        dump($categories);
+//        dump($authors);
+//        dump($contents);
+
+        //?categories=1813&per_page=10
+
+        $text = "
+        *За последние сутки добавлено:*
+         ". $statistics ."
+        ";
+
+        $parse->message_to_telegram($text);
     }
 
     protected function getCounts($categories)
@@ -128,4 +140,55 @@ class CountCommand extends Command
 
         return $VARS;
     }
+
+    protected function getContent($posts, $author_id)
+    {
+        $VARS = [];
+
+        $string = file_get_contents($posts . '?author=' . $author_id . '&per_page=100');
+        $data = json_decode($string);
+
+        switch (json_last_error()) {
+            case JSON_ERROR_NONE:
+                $data_error = '';
+                break;
+            case JSON_ERROR_DEPTH:
+                $data_error = 'Достигнута максимальная глубина стека';
+                break;
+            case JSON_ERROR_STATE_MISMATCH:
+                $data_error = 'Неверный или не корректный JSON';
+                break;
+            case JSON_ERROR_CTRL_CHAR:
+                $data_error = 'Ошибка управляющего символа, возможно верная кодировка';
+                break;
+            case JSON_ERROR_SYNTAX:
+                $data_error = 'Синтаксическая ошибка';
+                break;
+            case JSON_ERROR_UTF8:
+                $data_error = 'Некорректные символы UTF-8, возможно неверная кодировка';
+                break;
+            default:
+                $data_error = 'Неизвестная ошибка';
+                break;
+        }
+
+        if ($data_error != '') echo $data_error;
+
+        return count($data) ?? 0;
+    }
+
+    protected function statisticsEveryDay()
+    {
+        $out = [];
+        $authors = $this->getAuthors($this->authors);
+
+        foreach ($authors as $key => $value) {
+            if ($key != 1) {
+                $count = $this->getContent($this->posts, $key);
+                $out[$key] = $value['name'] . ' - ' . $count;
+            }
+        }
+        return $out;
+    }
+
 }

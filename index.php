@@ -16,6 +16,9 @@ use Command\EuroNewsCommand;
 
 use Command\CountCommand;
 
+use Command\IndependentCommand;
+use Command\Independent2Command;
+
 use Model\ParseLog\ParseLog;
 use Carbon\Carbon;
 
@@ -32,7 +35,9 @@ $application->add(new RTNews2Command());
 $application->add(new RTNews3Command());
 $application->add(new EuroNewsCommand());
 
-
 $application->add(new CountCommand());
+
+$application->add(new IndependentCommand());
+$application->add(new Independent2Command());
 
 $application->run();
