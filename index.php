@@ -18,6 +18,7 @@ use Command\CountCommand;
 
 use Command\IndependentCommand;
 use Command\Independent2Command;
+use Command\DWCommand;
 
 use Model\ParseLog\ParseLog;
 use Carbon\Carbon;
@@ -39,5 +40,6 @@ $application->add(new CountCommand());
 
 $application->add(new IndependentCommand());
 $application->add(new Independent2Command());
+$application->add(new DWCommand());
 
 $application->run();
