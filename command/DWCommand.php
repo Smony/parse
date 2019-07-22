@@ -38,7 +38,7 @@ class DWCommand extends Command
          [Open this link](https://thetop10news.com/author/dw/)
         ";
 
-//        $parse->message_to_telegram($text);
+        $parse->message_to_telegram($text);
 
         $this->parser($input, $output, $this->url, $io);
     }
@@ -67,54 +67,48 @@ class DWCommand extends Command
                 foreach ($con->find('#bodyContent') as $item2) {
                     $content2 = pq($item2);
                     $published = $content2->find('.col3 .group .smallList li:first')->html();
-
-//            $published = trim($published);
+                    $published = trim(substr($published, 22));
                     $text = $content2->find('.col3 .group .longText')->html();
-//                    $text = preg_replace('/\<div class\="c-font-size-switcher medium-order-4 js-font-size-switch u-float-end u-padding-top-0 t-font-size-switcher--blue"\>(.+)\<\/div\>/isU', '', $text);
-//                    $text = preg_replace('/\<div class\="widget widget--type-freeform
-//widget--size-fullwidth
-//widget--align-center"\>(.+)\<\/div\>/isU', '', $text);
+                    $text = str_replace("/image/", "https://www.dw.com/image/", $text);
+                    $text = str_replace("/en/", "https://www.dw.com/en/", $text);
                     $text .= "<p><a target=\"_blank\" rel=\"nofollow\" href=\"$link\">Source</a></p>";
                 }
 
-
-                dump($published);
-
             }
 
-//            try {
-//                $dd_post = explode('/', $published);
-//                $m = $dd_post[1];
-//                $y = $dd_post[2];
-//                $d = $dd_post[0];
-//                $t = '00:00';
-//
-//                $dd_post = $y . '-' . $m . '-' . $d . 'T' . $t . ':00';
-//
-//                $check = ParseLog::where('token', $link)->first();
-//
-//                if (empty($check)) {
-////                    $thumb_id = $parse->uploadMedia($thumb);
-//                    $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 13, 9, $text, 1);
-//
-//                    $output->writeln('<comment>' . $parse_id . '</comment>');
-//                    if (!empty($parse_id)) {
-//                        $VARS['item'] = $parse_id;
-//                        $VARS['token'] = $link;
-//                        $VARS['site_id'] = 1;
-//
-//                        ParseLog::create($VARS);
-//                    }
-//                    $style->success('добавлено..');
-//                } else {
-//                    $style->warning('есть в базе..');
-//                }
-//
-//                $style->newLine();
-//            } catch (Exception $e) {
-//                $output->writeln('<error>error..</error>');
-//                exit;
-//            }
+            try {
+                $dd_post = explode(".", $published);
+                $m = $dd_post[1];
+                $y = $dd_post[2];
+                $d = $dd_post[0];
+                $dd_post = $y . '-' . $m . '-' . $d . 'T00:00:00';
+
+                $check = ParseLog::where('token', $link)->first();
+
+                if (empty($check)) {
+                    if (!empty($title)) {
+                    $thumb_id = $parse->uploadImage($thumb);
+                        $parse_id = $parse->crated($title, $dd_post, $dd_post, "publish", 13, 15, $text, $thumb_id);
+                    }
+                    $output->writeln('<comment>' . $parse_id . '</comment>');
+                    if (!empty($parse_id)) {
+                        $VARS['item'] = $parse_id;
+                        $VARS['token'] = $link;
+                        $VARS['site_id'] = 1;
+
+                        ParseLog::create($VARS);
+                    }
+                    $style->success('добавлено..');
+                } else {
+                    $style->warning('есть в базе..');
+                }
+
+                $style->newLine();
+            } catch (Exception $e) {
+                $output->writeln('<error>error..</error>');
+                exit;
+            }
+
         }
     }
 }
