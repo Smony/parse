@@ -8,15 +8,9 @@ class Parse
 {
     public $tables = ['parse_log', 'sites'];
 
-//    for test
-    public $TELEGRAM_TOKEN = '855351439:AAGufMqcr0RPFRNbvnAn-4hnXCMY9pIrcCw';
-    public $TELEGRAM_CHATID = '-397220922';
-    public $TELEGRAM_CHATID2 = '-397220922';
+    public $TELEGRAM_TOKEN = '';
+    public $TELEGRAM_CHATID = '';
 
-//    prod
-//    public $TELEGRAM_TOKEN = '778793190:AAEAp_ANY6_q5T_SVwvz8wtqdpLHT8NGqgQ';
-//    public $TELEGRAM_CHATID = '-320696767';
-//    public $TELEGRAM_CHATID2 = '-348064448';
 
     public function __construct()
     {
